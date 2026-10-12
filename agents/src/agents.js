@@ -52,7 +52,7 @@ export function decodeRegistration(uri) {
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const MIN_WORK_MS = Number(process.env.MIN_WORK_SECONDS || 6) * 1000;
+const MIN_WORK_MS = Number(process.env.MIN_WORK_SECONDS || 10) * 1000;
 
 export class Agent {
   constructor(persona, wallet, agentId) {

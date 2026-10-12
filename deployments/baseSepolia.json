@@ -1,0 +1,12 @@
+{
+  "network": "baseSepolia",
+  "chainId": 84532,
+  "startBlock": 48009627,
+  "verifier": "0xfdc6C7687d81bf64ECA3B73b696E93FE3cAE9dA1",
+  "contracts": {
+    "MockUSDC": "0xFD3369f9b1173f91fF223235f141534696dAAa99",
+    "IdentityRegistry": "0x56B4fCae7B443129DB2adAD33fF7994AB45B7448",
+    "ReputationRegistry": "0x9A2cA0CE78BDbd3C18EEf1D745Fd1D9A2636b95c",
+    "StreamingEscrow": "0x8A05C0b0621813506B80b423854fFd51c1Be666C"
+  }
+}

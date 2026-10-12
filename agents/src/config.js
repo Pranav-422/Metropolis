@@ -41,14 +41,44 @@ export function walletFor(privateKey) {
   return createWalletClient({ account: privateKeyToAccount(privateKey), chain, transport });
 }
 
-export const read = (contract, functionName, args = []) => publicClient.readContract({ ...contract, functionName, args });
+// Public RPCs are load-balanced: right after a tx is mined, the next request can land on a node
+// that has not seen it yet. Reads are pinned to the newest block we have written to, and sends are
+// retried, so a lagging node shows up as a short delay instead of a bogus revert.
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const RETRIES = isTestnet ? 8 : 1;
+let minBlock;
+
+async function retry(fn) {
+  for (let i = 1; ; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      if (i >= RETRIES) throw e;
+      await sleep(1000);
+    }
+  }
+}
+
+export const read = (contract, functionName, args = []) =>
+  retry(() => publicClient.readContract({ ...contract, functionName, args, blockNumber: minBlock }));
 
 /// Send a contract call and wait for it to be mined. Throws on revert.
 export async function send(wallet, contract, functionName, args = []) {
-  const { request } = await publicClient.simulateContract({ ...contract, functionName, args, account: wallet.account });
-  const hash = await wallet.writeContract(request);
+  const hash = await retry(async () => {
+    const { request } = await publicClient.simulateContract({ ...contract, functionName, args, account: wallet.account });
+    return wallet.writeContract(request);
+  });
   const receipt = await publicClient.waitForTransactionReceipt({ hash });
   if (receipt.status !== "success") throw new Error(`${functionName} reverted (${hash})`);
+  if (minBlock === undefined || receipt.blockNumber > minBlock) minBlock = receipt.blockNumber;
+  return receipt;
+}
+
+/// Plain ETH transfer with the same bookkeeping as `send`.
+export async function sendEth(wallet, to, value) {
+  const hash = await retry(() => wallet.sendTransaction({ to, value }));
+  const receipt = await publicClient.waitForTransactionReceipt({ hash });
+  if (minBlock === undefined || receipt.blockNumber > minBlock) minBlock = receipt.blockNumber;
   return receipt;
 }
 

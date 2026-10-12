@@ -3,15 +3,15 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { parseEther, parseUnits, formatEther, maxUint256 } from "viem";
+import { parseEther, parseUnits, formatEther, maxUint256, parseEventLogs } from "viem";
 import { generatePrivateKey } from "viem/accounts";
-import { NETWORK, publicClient, walletFor, funderKey, token, identity, escrow, read, send } from "./config.js";
+import { NETWORK, publicClient, walletFor, funderKey, token, identity, escrow, read, send, sendEth } from "./config.js";
 import { PERSONAS, registrationURI } from "./agents.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const WALLETS_FILE = path.join(here, "..", `wallets.${NETWORK}.json`);
 
-const GAS_ETH = parseEther(process.env.AGENT_GAS_ETH || (NETWORK === "localhost" ? "1" : "0.002"));
+const GAS_ETH = parseEther(process.env.AGENT_GAS_ETH || (NETWORK === "localhost" ? "1" : "0.00001"));
 const USDC_BALANCE = parseUnits("50", 6);
 const STAKE = parseUnits("10", 6);
 
@@ -32,18 +32,15 @@ async function main() {
     wallets[p.key].address = addr;
 
     const eth = await publicClient.getBalance({ address: addr });
-    if (eth < GAS_ETH / 2n) {
-      const hash = await funder.sendTransaction({ to: addr, value: GAS_ETH - eth });
-      await publicClient.waitForTransactionReceipt({ hash });
-    }
+    if (eth < GAS_ETH / 2n) await sendEth(funder, addr, GAS_ETH - eth);
     const bal = await read(token, "balanceOf", [addr]);
     const staked = await read(escrow, "stakeOf", [await read(identity, "agentOf", [addr])]);
     if (bal + staked < USDC_BALANCE) await send(funder, token, "mint", [addr, USDC_BALANCE]);
 
     let agentId = await read(identity, "agentOf", [addr]);
     if (agentId === 0n) {
-      await send(w, identity, "register", [registrationURI(p)]);
-      agentId = await read(identity, "agentOf", [addr]);
+      const receipt = await send(w, identity, "register", [registrationURI(p)]);
+      [{ args: { agentId } }] = parseEventLogs({ abi: identity.abi, logs: receipt.logs, eventName: "Registered" });
     }
     wallets[p.key].agentId = Number(agentId);
 
