@@ -4,7 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "setup": "node src/setup.js",
+    "demo": "node src/demo.js",
+    "setup:testnet": "node src/setup.js --testnet",
+    "demo:testnet": "node src/demo.js --testnet"
   },
   "keywords": [],
   "author": "",
