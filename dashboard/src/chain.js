@@ -42,7 +42,9 @@ const CHUNK = 2000n;
 
 export function createFeed() {
   let nextBlock = BigInt(deployment.startBlock);
-  const state = { agents: {}, jobs: {}, events: [], scoreHistory: {} };
+  // clockOffset: chain time minus wall time. A local node mining many blocks per second runs
+  // ahead of the wall clock, so live tickers must count in chain time.
+  const state = { agents: {}, jobs: {}, events: [], scoreHistory: {}, clockOffset: 0 };
 
   async function fetchEvents() {
     const latest = await client.getBlockNumber();
@@ -134,6 +136,8 @@ export function createFeed() {
   return {
     state,
     async refresh() {
+      const head = await client.getBlock();
+      state.clockOffset = Math.max(0, Number(head.timestamp) - Date.now() / 1000);
       await fetchEvents();
       await fetchAgentStats();
       return state;
