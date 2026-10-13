@@ -12,6 +12,7 @@ import { loadWallets } from "./setup.js";
 import { MODEL_NAME } from "./llm.js";
 
 const MAX_SECONDS = 90;
+const DEMO_CAST = PERSONAS.filter((p) => p.demo).map((p) => p.name);
 const PAUSE_MS = Number(process.env.PAUSE_SECONDS || 4) * 1000;
 
 const c = { dim: "\x1b[2m", bold: "\x1b[1m", red: "\x1b[31m", green: "\x1b[32m", yellow: "\x1b[33m", cyan: "\x1b[36m", reset: "\x1b[0m" };
@@ -30,7 +31,7 @@ const byId = (id) => Object.values(agents).find((a) => a.agentId === id);
 const verifier = walletFor(funderKey);
 
 async function hire(client, task) {
-  const offers = await client.marketplace(task.skill, MAX_SECONDS);
+  const offers = await client.marketplace(task.skill, MAX_SECONDS, DEMO_CAST);
   say(client.name, `looking for "${task.skill}" on-chain:`);
   for (const o of offers) {
     console.log(`  ${c.dim}${"".padEnd(8)}   #${o.agentId} ${o.name.padEnd(6)} rep ${String(o.score).padStart(3)}/100   ${o.ratePerSecond} tUSDC/s   stake needed ${usdc(o.required)}${c.reset}`);
@@ -71,7 +72,7 @@ async function sybilAttempt(attacker, target) {
 
 async function leaderboard() {
   banner("Reputation board");
-  for (const a of Object.values(agents)) {
+  for (const a of Object.values(agents).filter((a) => a.demo)) {
     const [score, s, stake] = await Promise.all([read(reputation, "scoreOf", [a.agentId]), read(reputation, "stats", [a.agentId]), read(escrow, "stakeOf", [a.agentId])]);
     const [, , passed, failed, free, earned, slashed] = s;
     console.log(`  #${a.agentId} ${a.name.padEnd(6)} rep ${String(score).padStart(3)}  passed ${passed}  failed ${failed}  fake reviews ${free}  earned ${usdc(earned)}  slashed ${usdc(slashed)}  stake ${usdc(stake)}`);

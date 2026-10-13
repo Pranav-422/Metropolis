@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
-import { createPublicClient, createWalletClient, http } from "viem";
+import { createPublicClient, createWalletClient, http, nonceManager } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { hardhat, baseSepolia } from "viem/chains";
 
@@ -38,7 +38,7 @@ export const escrow = handle("StreamingEscrow");
 export const publicClient = createPublicClient({ chain, transport, pollingInterval: isTestnet ? 1000 : 200 });
 
 export function walletFor(privateKey) {
-  return createWalletClient({ account: privateKeyToAccount(privateKey), chain, transport });
+  return createWalletClient({ account: privateKeyToAccount(privateKey, { nonceManager }), chain, transport });
 }
 
 // Public RPCs are load-balanced: right after a tx is mined, the next request can land on a node

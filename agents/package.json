@@ -8,7 +8,9 @@
     "setup": "node src/setup.js",
     "demo": "node src/demo.js",
     "setup:testnet": "node src/setup.js --testnet",
-    "demo:testnet": "node src/demo.js --testnet"
+    "demo:testnet": "node src/demo.js --testnet",
+    "swarm": "node src/swarm.js",
+    "swarm:testnet": "node src/swarm.js --testnet"
   },
   "keywords": [],
   "author": "",

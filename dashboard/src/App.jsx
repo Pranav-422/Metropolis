@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createFeed, deployment, explorer, usdc } from "./chain.js";
 
 const POLL_MS = 1500;
+const MAX_JOBS_SHOWN = 12;
+const MAX_EVENTS_SHOWN = 60;
 
 function useFeed() {
   const feed = useMemo(() => createFeed(), []);
@@ -247,6 +249,7 @@ export default function App() {
   const slashed = jobs.reduce((s, j) => s + (j.slashed ? usdc(j.slashed) : 0), 0);
   const fake = state.events.filter((e) => e.kind === "fake").length;
   const live = jobs.filter((j) => j.status === "streaming").length;
+  const settled = jobs.filter((j) => j.status === "paid" || j.status === "slashed").length;
 
   return (
     <div className="page">
@@ -271,8 +274,10 @@ export default function App() {
           <strong className="mono">{fmt(streamed)}</strong>
         </div>
         <div className="stat">
-          <span className="dim small">Live streams</span>
-          <strong className="mono">{live}</strong>
+          <span className="dim small">Live streams · settled jobs</span>
+          <strong className="mono">
+            {live} <span className="dim">· {settled}</span>
+          </strong>
         </div>
         <div className="stat">
           <span className="dim small">Stake slashed</span>
@@ -297,15 +302,16 @@ export default function App() {
           <h2>Jobs</h2>
           <div className="jobs">
             {jobs.length === 0 && <p className="dim">No jobs yet. Run the agents.</p>}
-            {jobs.map((j) => (
+            {jobs.slice(0, MAX_JOBS_SHOWN).map((j) => (
               <JobCard key={String(j.id)} job={j} agents={state.agents} now={now} />
             ))}
+            {jobs.length > MAX_JOBS_SHOWN && <p className="dim small">+ {jobs.length - MAX_JOBS_SHOWN} earlier jobs</p>}
           </div>
         </section>
         <aside>
           <h2>On-chain activity</h2>
           <ol className="feed">
-            {[...state.events].reverse().map((e, i) => (
+            {[...state.events].reverse().slice(0, MAX_EVENTS_SHOWN).map((e, i) => (
               <li key={`${e.tx}-${i}`} className={`feed-${e.kind}`}>
                 <span>{eventText(e, state)}</span>
                 <TxLink hash={e.tx} />

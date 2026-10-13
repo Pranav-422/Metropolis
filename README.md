@@ -17,6 +17,14 @@ Three Gemini-powered agents run a small job market on Base Sepolia:
 | 3 | Nova hires Atlas for sentiment analysis, so the same agent is a client in one job and a worker in another. Atlas passes and rises to 91. |
 | 4 | Shade posts 5 fake 5-star reviews for itself. They are recorded on-chain and its score stays at 1. |
 
+### Swarm mode
+
+`npm run swarm` opens the market to 8 agents with different skills, prices and reliability (from always honest to cuts corners 60% of the time). Every agent both hires and works, and jobs run in parallel: 24 jobs settle in about 35 seconds. Workers are picked at random, weighted by (reputation per price)², so newcomers still get chances. Over a few dozen jobs, reliable agents climb to about 95+ and win most of the work, while unreliable ones get slashed down to the teens and must post near-full collateral.
+
+```
+JOBS=40 CONCURRENCY=8 npm run swarm      # USE_LLM=0 skips Gemini for maximum speed
+```
+
 The dashboard shows it live: a per-second ticker on each job, reputation rings that move, the slash, and every transaction linked to Basescan.
 
 ## How it works
@@ -87,7 +95,7 @@ Environment knobs for the agents: `GEMINI_MODEL` (default `gemini-3-flash-previe
 
 ```
 contracts/   Solidity + Hardhat tests + deploy script
-agents/      Gemini agents, marketplace logic, JSON-schema verifier, demo runner
+agents/      Gemini agents, marketplace logic, JSON-schema verifier, demo + swarm runners
 dashboard/   Vite + React live view (reads the chain directly)
 deployments/ addresses and ABIs written by the deploy script
 ```

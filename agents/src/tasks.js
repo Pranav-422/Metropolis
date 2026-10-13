@@ -68,6 +68,49 @@ export const TASKS = {
       ],
     },
   },
+
+  summarization: {
+    skill: "summarization",
+    title: "Summarise a product review thread",
+    instructions: "Write a one-sentence summary and exactly three key points from the thread.",
+    input:
+      "Thread: Owners of the AeroBook 14 praise its weight and battery, with several reporting 15+ hours of use. A recurring complaint is screen flicker at low brightness, which a firmware update partially fixed. Most say the keyboard is excellent but the speakers are weak. Overall sentiment is positive, with value for money the most cited reason to buy.",
+    schema: {
+      type: "object",
+      properties: {
+        summary: { type: "string", minLength: 20 },
+        key_points: { type: "array", items: { type: "string", minLength: 5 }, minItems: 3, maxItems: 3 },
+      },
+      required: ["summary", "key_points"],
+      additionalProperties: false,
+    },
+    fallback: {
+      summary: "Owners like the AeroBook 14's weight, battery and value, despite weak speakers and some screen flicker.",
+      key_points: ["Battery often lasts 15+ hours", "Screen flicker at low brightness, partly fixed by firmware", "Great keyboard, weak speakers"],
+    },
+  },
+
+  translation: {
+    skill: "translation",
+    title: "Translate a product tagline into three languages",
+    instructions: "Translate the tagline into Hindi, Spanish and French. Use the ISO codes hi, es and fr as keys.",
+    input: "Light enough to forget, powerful enough to rely on.",
+    schema: {
+      type: "object",
+      properties: {
+        hi: { type: "string", minLength: 5 },
+        es: { type: "string", minLength: 5 },
+        fr: { type: "string", minLength: 5 },
+      },
+      required: ["hi", "es", "fr"],
+      additionalProperties: false,
+    },
+    fallback: {
+      hi: "इतना हल्का कि भूल जाएँ, इतना शक्तिशाली कि भरोसा कर सकें।",
+      es: "Tan ligero que lo olvidarás, tan potente que podrás confiar en él.",
+      fr: "Si léger qu'on l'oublie, si puissant qu'on peut compter sur lui.",
+    },
+  },
 };
 
 /// The part of a task that goes on-chain (no fallback answer).
